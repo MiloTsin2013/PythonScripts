@@ -3,6 +3,7 @@
 
 import os
 import re
+import time
 import xlrd, xlwt
 import collections
 import linecache
@@ -35,52 +36,6 @@ def create_dst_txt(content, file_name):
     with open(file_name, 'w') as f_w:
         for line in content:
             f_w.write(line)
-
-def set_style(name, height, bold=False):
-    style = xlwt.XFStyle() # 初始化样式
-
-    font = xlwt.Font() # 为样式创建字体
-    font.name = name # 'Times New Roman'
-    font.bold = bold
-    font.color_index = 4
-    font.height = height
-
-    # borders= xlwt.Borders()
-    # borders.left= 6
-    # borders.right= 6
-    # borders.top= 6
-    # borders.bottom= 6
-
-    style.font = font
-    # style.borders = borders
-
-    return style
-
-def save_data(dt_dic):
-    wb = xlwt.Workbook() #创建工作簿
-    sheet = wb.add_sheet(u'Radware_configuration_info', cell_overwrite_ok=True)
-    table_title = [u'ID', u'VS IP+Port', u'VS Name', u'Realserver ID', u'Realserver IP+Port', u'Realserver Status']
-
-    for i in range(0, len(table_title)):
-        sheet.write(0,i,table_title[i],set_style('Times New Roman',220,True))
-
-    row = 1
-    for k in dt_dic.keys():
-        print('\n', k, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'], vs_info[k]['vs_name'])
-        merge_rows = len(vs_info[k]['vs_rs'].keys())
-        # print(row, merge_rows)
-        row2 = row + merge_rows -1
-        sheet.write_merge(row, row2 , 0, 0, k)
-        sheet.write_merge(row, row2, 1, 1, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'])
-        sheet.write_merge(row, row2, 2, 2, vs_info[k]['vs_name'])
-        for k1 in vs_info[k]['vs_rs'].keys():
-            vs_k1 = vs_info[k]['vs_rs'][k1]
-            sheet.write_merge(row, row, 3, 3, k1)
-            sheet.write_merge(row, row, 4, 4, vs_k1['vs_rs_ip'] + ':' + vs_k1['vs_rs_port'])
-            sheet.write_merge(row, row, 5, 5, vs_k1['vs_rs_status'])
-            row += 1
-
-    wb.save('Radware_configuration_infoomation.xls')
 
 
 def get_id(f):
@@ -121,6 +76,62 @@ def get_vs_info(id_num, p, fn):
                     elif re.findall(ip_pattern,line):
                         chld_rs_dic.setdefault('vs_rs_ip', re.findall(ip_pattern, line)[0])
                         chld_rs_dic.setdefault('vs_rs_port', '8001')
+
+
+def set_style(name, height, bold=False):
+    style = xlwt.XFStyle() # 初始化样式
+
+    font = xlwt.Font() # 为样式创建字体
+    font.name = name # 'Times New Roman'
+    font.bold = bold
+    font.color_index = 4
+    font.height = height
+
+    # borders= xlwt.Borders()
+    # borders.left= 6
+    # borders.right= 6
+    # borders.top= 6
+    # borders.bottom= 6
+
+    style.font = font
+    # style.borders = borders
+
+    return style
+
+
+def save_data(dt_dic):
+    cur_time = time.strftime('%Y%m%d%H%M%S', time.localtime())
+    wb = xlwt.Workbook() #创建工作簿
+    sheet = wb.add_sheet(u'Radware_configuration_info', cell_overwrite_ok=True)
+    table_title = [u'ID', u'VS IP+Port', u'VS Name', u'Realserver ID', u'Realserver IP+Port', u'Realserver Status']
+
+    for i in range(0, len(table_title)):
+        sheet.write(0,i,table_title[i],set_style('Times New Roman',220,True))
+
+    row = 1
+    for k in dt_dic.keys():
+        print('\n' + '-'*20)
+        print('Handling VS_ID: {0} begin'.format(k))
+        print(k, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'], vs_info[k]['vs_name'])
+        merge_rows = len(vs_info[k]['vs_rs'].keys())
+        row2 = row + merge_rows -1
+        sheet.write_merge(row, row2 , 0, 0, k)
+        sheet.write_merge(row, row2, 1, 1, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'])
+        sheet.write_merge(row, row2, 2, 2, vs_info[k]['vs_name'])
+        for k1 in vs_info[k]['vs_rs'].keys():
+            vs_k1 = vs_info[k]['vs_rs'][k1]
+            sheet.write_merge(row, row, 3, 3, k1)
+            sheet.write_merge(row, row, 4, 4, vs_k1['vs_rs_ip'] + ':' + vs_k1['vs_rs_port'])
+            sheet.write_merge(row, row, 5, 5, vs_k1['vs_rs_status'])
+            row += 1
+        print('Handling VS_ID: {0} end'.format(k))
+        print('-'*20)
+
+    xls_name = 'Radware_configuration_information_' + cur_time + '.xls'
+    wb.save(xls_name)
+    wk_path = os.getcwd()
+    print('\nFinshed!!!')
+    print('\nAnalysis result saved in: \n{0}\\{1}'.format(wk_path, xls_name))
 
 
 dst_content = slice_text(file_path, split_kw, end_kw)
