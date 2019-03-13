@@ -7,7 +7,7 @@ import xlrd, xlwt
 import collections
 import linecache
 
-file_path = 'radware-cfg-log-2.txt'
+file_path = 'radware-cfg-log.txt'
 # file_path = input('Please input path of tartget file:')
 # print('Tartget file is:{0}'.format(file_path))
 total_ln = os.popen('wc -l {0}'.format(file_path)).read().split()[0]
