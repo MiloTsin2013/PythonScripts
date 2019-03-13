@@ -3,11 +3,13 @@
 
 import os
 import re
+import xlrd, xlwt
 import collections
 import linecache
 
-file_path = input('Please input path of tartget file:')
-print('Tartget file is:{0}'.format(file_path))
+file_path = 'radware-cfg-log-2.txt'
+# file_path = input('Please input path of tartget file:')
+# print('Tartget file is:{0}'.format(file_path))
 total_ln = os.popen('wc -l {0}'.format(file_path)).read().split()[0]
 split_kw = 'Virtual server state:'
 end_kw = 'IDS group state:'
@@ -33,6 +35,52 @@ def create_dst_txt(content, file_name):
     with open(file_name, 'w') as f_w:
         for line in content:
             f_w.write(line)
+
+def set_style(name, height, bold=False):
+    style = xlwt.XFStyle() # 初始化样式
+
+    font = xlwt.Font() # 为样式创建字体
+    font.name = name # 'Times New Roman'
+    font.bold = bold
+    font.color_index = 4
+    font.height = height
+
+    # borders= xlwt.Borders()
+    # borders.left= 6
+    # borders.right= 6
+    # borders.top= 6
+    # borders.bottom= 6
+
+    style.font = font
+    # style.borders = borders
+
+    return style
+
+def save_data(dt_dic):
+    wb = xlwt.Workbook() #创建工作簿
+    sheet = wb.add_sheet(u'Radware_configuration_info', cell_overwrite_ok=True)
+    table_title = [u'ID', u'VS IP+Port', u'VS Name', u'Realserver ID', u'Realserver IP+Port', u'Realserver Status']
+
+    for i in range(0, len(table_title)):
+        sheet.write(0,i,table_title[i],set_style('Times New Roman',220,True))
+
+    row = 1
+    for k in dt_dic.keys():
+        print('\n', k, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'], vs_info[k]['vs_name'])
+        merge_rows = len(vs_info[k]['vs_rs'].keys())
+        # print(row, merge_rows)
+        row2 = row + merge_rows -1
+        sheet.write_merge(row, row2 , 0, 0, k)
+        sheet.write_merge(row, row2, 1, 1, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'])
+        sheet.write_merge(row, row2, 2, 2, vs_info[k]['vs_name'])
+        for k1 in vs_info[k]['vs_rs'].keys():
+            vs_k1 = vs_info[k]['vs_rs'][k1]
+            sheet.write_merge(row, row, 3, 3, k1)
+            sheet.write_merge(row, row, 4, 4, vs_k1['vs_rs_ip'] + ':' + vs_k1['vs_rs_port'])
+            sheet.write_merge(row, row, 5, 5, vs_k1['vs_rs_status'])
+            row += 1
+
+    wb.save('Radware_configuration_infoomation.xls')
 
 
 def get_id(f):
@@ -90,17 +138,9 @@ for index, value in enumerate(vs_ids):
     get_vs_info(value, pattern, splited_fn)
 # print(vs_info)
 # for key in vs_info.keys():
-#     print('\nVS_ID:\t', key, 
-#         '\nVS_IP+PORT:', vs_info[key]['vs_ip'] + ':' + vs_info[key]['vs_port'], 
-#         '\nVS_NAME:', vs_info[key]['vs_name'])
+#     print('\n', key, vs_info[key]['vs_ip'] + ':' + vs_info[key]['vs_port'], vs_info[key]['vs_name'])
+#     print(len(vs_info[key]['vs_rs'].keys()))
 #     for key1 in vs_info[key]['vs_rs'].keys():
 #         vs_k = vs_info[key]['vs_rs'][key1]
-#         print('\t'*3, 
-#             'VS_RS_ID:', key1, 
-#             '\tVS_RS_IP+PORT:', vs_k['vs_rs_ip'] + ':' + vs_k['vs_rs_port'], 
-#             '\tVS_RS_STATUS:', vs_k['vs_rs_status'])
-for key in vs_info.keys():
-    print('\n', key, vs_info[key]['vs_ip'] + ':' + vs_info[key]['vs_port'], vs_info[key]['vs_name'])
-    for key1 in vs_info[key]['vs_rs'].keys():
-        vs_k = vs_info[key]['vs_rs'][key1]
-        print('\t'*3, key1, vs_k['vs_rs_ip'] + ':' + vs_k['vs_rs_port'], vs_k['vs_rs_status'])
+#         print('\t'*3, key1, vs_k['vs_rs_ip'] + ':' + vs_k['vs_rs_port'], vs_k['vs_rs_status'])
+save_data(vs_info)
