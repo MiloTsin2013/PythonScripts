@@ -8,7 +8,7 @@ import xlrd, xlwt
 import collections
 import linecache
 
-file_path = 'radware-cfg-log.txt'
+file_path = '10.7.99.120-radware-cfg-log-2.txt'
 # file_path = input('Please input path of tartget file:')
 # print('Tartget file is:{0}'.format(file_path))
 total_ln = os.popen('wc -l {0}'.format(file_path)).read().split()[0]
@@ -87,6 +87,10 @@ def set_style(name, height, bold=False):
     font.color_index = 4
     font.height = height
 
+    alignment = xlwt.Alignment() # Create Alignment
+    # alignment.horz = xlwt.Alignment.HORZ_CENTER # May be: HORZ_GENERAL, HORZ_LEFT, HORZ_CENTER, HORZ_RIGHT, HORZ_FILLED, HORZ_JUSTIFIED, HORZ_CENTER_ACROSS_SEL, HORZ_DISTRIBUTED
+    alignment.vert = xlwt.Alignment.VERT_CENTER # May be: VERT_TOP, VERT_CENTER, VERT_BOTTOM, VERT_JUSTIFIED, VERT_DISTRIBUTED
+
     # borders= xlwt.Borders()
     # borders.left= 6
     # borders.right= 6
@@ -95,8 +99,13 @@ def set_style(name, height, bold=False):
 
     style.font = font
     # style.borders = borders
+    style.alignment = alignment
 
     return style
+
+
+def content_style():
+    return set_style('Times New Roman', 180)
 
 
 def save_data(dt_dic):
@@ -104,9 +113,16 @@ def save_data(dt_dic):
     wb = xlwt.Workbook() #创建工作簿
     sheet = wb.add_sheet(u'Radware_configuration_info', cell_overwrite_ok=True)
     table_title = [u'ID', u'VS IP+Port', u'VS Name', u'Realserver ID', u'Realserver IP+Port', u'Realserver Status']
+    sheet.col(0).width = 1100
+    sheet.col(1).width = 5000
+    sheet.col(2).width = 7000
+    sheet.col(3).width = 5000
+    sheet.col(4).width = 7000
+    sheet.col(5).width = 5000
 
     for i in range(0, len(table_title)):
-        sheet.write(0,i,table_title[i],set_style('Times New Roman',220,True))
+        sheet.write(0,i,table_title[i],set_style('Times New Roman', 220, True))
+
 
     row = 1
     for k in dt_dic.keys():
@@ -115,14 +131,14 @@ def save_data(dt_dic):
         print(k, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'], vs_info[k]['vs_name'])
         merge_rows = len(vs_info[k]['vs_rs'].keys())
         row2 = row + merge_rows -1
-        sheet.write_merge(row, row2 , 0, 0, k)
-        sheet.write_merge(row, row2, 1, 1, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'])
-        sheet.write_merge(row, row2, 2, 2, vs_info[k]['vs_name'])
+        sheet.write_merge(row, row2 , 0, 0, k, content_style())
+        sheet.write_merge(row, row2, 1, 1, vs_info[k]['vs_ip'] + ':' + vs_info[k]['vs_port'], content_style())
+        sheet.write_merge(row, row2, 2, 2, vs_info[k]['vs_name'], content_style())
         for k1 in vs_info[k]['vs_rs'].keys():
             vs_k1 = vs_info[k]['vs_rs'][k1]
-            sheet.write_merge(row, row, 3, 3, k1)
-            sheet.write_merge(row, row, 4, 4, vs_k1['vs_rs_ip'] + ':' + vs_k1['vs_rs_port'])
-            sheet.write_merge(row, row, 5, 5, vs_k1['vs_rs_status'])
+            sheet.write_merge(row, row, 3, 3, k1, content_style())
+            sheet.write_merge(row, row, 4, 4, vs_k1['vs_rs_ip'] + ':' + vs_k1['vs_rs_port'], content_style())
+            sheet.write_merge(row, row, 5, 5, vs_k1['vs_rs_status'], content_style())
             row += 1
         print('Handling VS_ID: {0} end'.format(k))
         print('-'*20)
